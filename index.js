@@ -2,10 +2,14 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const admin = require("firebase-admin");
+const dotenv = require("dotenv");
+const fs = require("fs");
+
+dotenv.config();
 
 // Initialize Express app
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000; // Default to 3000 if not set in .env
 
 // Use body-parser to parse incoming JSON requests
 app.use(bodyParser.json());
@@ -13,15 +17,35 @@ app.use(bodyParser.json());
 // Enable CORS for cross-origin requests
 app.use(cors());
 
-// Initialize Firebase Admin SDK
-const serviceAccount = require("./location-tracker-7e82f-firebase-adminsdk-cii4p-30606f28d1.json"); // Path to your Firebase service account key
+// Load Firebase credentials securely
+let firebaseCredentials;
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://location-tracker-7e82f-default-rtdb.firebaseio.com" // Replace with your Firebase Database URL
+try {
+    // Check if a path to a Firebase key file is provided
+    if (process.env.FIREBASE_CREDENTIALS_PATH) {
+        const keyFilePath = process.env.FIREBASE_CREDENTIALS_PATH;
+        firebaseCredentials = JSON.parse(fs.readFileSync(keyFilePath, "utf-8"));
+    } else if (process.env.FIREBASE_JSON) {
+        firebaseCredentials = JSON.parse(process.env.FIREBASE_JSON);
+    } else {
+        throw new Error("Firebase credentials are missing!");
+    }
 
-});
+    // Initialize Firebase Admin SDK
+    admin.initializeApp({
+        credential: admin.credential.cert(firebaseCredentials),
+        databaseURL: process.env.FIREBASE_DATABASE_URL, // Use from .env
+    });
+} catch (error) {
+    console.error("Failed to initialize Firebase Admin SDK:", error.message);
+    process.exit(1); // Exit the process if Firebase initialization fails
+}
 
+
+app.get("/", (req, res) => {
+    console.log("Working")
+    res.send("API Working")
+})
 // Reference to Firebase Realtime Database
 const db = admin.database();
 // console.log(db)
@@ -69,7 +93,7 @@ app.post("/requestChildData", async (req, res) => {
         return res.status(500).json({ success: false, message: "Server error." });
     }
 });
- 
+
 app.post("/checkInternetStatus", async (req, res) => {
     const { childId } = req.body;
 
