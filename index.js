@@ -17,29 +17,12 @@ app.use(bodyParser.json());
 // Enable CORS for cross-origin requests
 app.use(cors());
 
-// Load Firebase credentials securely
-let firebaseCredentials;
+const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
 
-try {
-    // Check if a path to a Firebase key file is provided
-    if (process.env.FIREBASE_CREDENTIALS_PATH) {
-        const keyFilePath = process.env.FIREBASE_CREDENTIALS_PATH;
-        firebaseCredentials = JSON.parse(fs.readFileSync(keyFilePath, "utf-8"));
-    } else if (process.env.FIREBASE_JSON) {
-        firebaseCredentials = JSON.parse(process.env.FIREBASE_JSON);
-    } else {
-        throw new Error("Firebase credentials are missing!");
-    }
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
 
-    // Initialize Firebase Admin SDK
-    admin.initializeApp({
-        credential: admin.credential.cert(firebaseCredentials),
-        databaseURL: process.env.FIREBASE_DATABASE_URL, // Use from .env
-    });
-} catch (error) {
-    console.error("Failed to initialize Firebase Admin SDK:", error.message);
-    process.exit(1); // Exit the process if Firebase initialization fails
-}
 
 
 app.get("/", (req, res) => {
