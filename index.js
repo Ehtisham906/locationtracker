@@ -2,14 +2,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const admin = require("firebase-admin");
-const dotenv = require("dotenv");
-const fs = require("fs");
-
-dotenv.config();
 
 // Initialize Express app
 const app = express();
-const port = process.env.PORT || 3000; // Default to 3000 if not set in .env
+const port = process.env.PORT || 3000;
 
 // Use body-parser to parse incoming JSON requests
 app.use(bodyParser.json());
@@ -17,18 +13,18 @@ app.use(bodyParser.json());
 // Enable CORS for cross-origin requests
 app.use(cors());
 
-const serviceAccount = require('/etc/secrets/serviceAccountKey.json');
+// Initialize Firebase Admin SDK
+const serviceAccount = require("/etc/secrets/serviceAccountKey.json"); // Path to your Firebase service account key
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    
+    databaseURL: "https://location-tracker-7e82f-default-rtdb.firebaseio.com" // Replace with your Firebase Database URL
+
 });
-
-
 
 app.get("/", (req, res) => {
     console.log("Working")
-    res.send("API Working")
+    res.send("Working")
 })
 // Reference to Firebase Realtime Database
 const db = admin.database();
